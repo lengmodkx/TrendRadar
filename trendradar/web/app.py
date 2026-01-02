@@ -3,7 +3,7 @@
 TrendRadar Web 应用主入口
 """
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -45,8 +45,12 @@ app.mount("/static", StaticFiles(directory="trendradar/web/static"), name="stati
 @app.on_event("startup")
 async def startup_event():
     """应用启动时创建数据库表"""
-    Base.metadata.create_all(bind=engine)
-    print("数据库表创建完成")
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("数据库表创建完成")
+    except Exception as e:
+        print(f"警告: 数据库连接失败，服务将以无数据库模式启动: {e}")
+        print("提示: 请检查数据库配置或稍后初始化数据库表")
 
 
 @app.get("/health")

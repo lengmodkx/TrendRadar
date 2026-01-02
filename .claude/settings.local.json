@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:brainstorming)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(where:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)",
+      "Bash(uv pip install:*)",
+      "Bash(uv venv:*)",
+      "Bash(.venv\\\\Scripts\\\\uvic.exe:*)",
+      "Bash(\".venv/Scripts/uvicorn.exe\" trendradar.web.app:app --reload --host 0.0.0.0 --port 8000)",
+      "Bash(curl:*)"
+    ]
+  }
+}
