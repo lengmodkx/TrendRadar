@@ -99,3 +99,27 @@ async def get_optional_user(
         pass
 
     return None
+
+
+async def get_current_admin(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    获取当前超级管理员（依赖注入）
+
+    Args:
+        current_user: 当前登录用户
+
+    Returns:
+        当前管理员用户对象
+
+    Raises:
+        HTTPException: 用户不是超级管理员
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="需要超级管理员权限"
+        )
+
+    return current_user

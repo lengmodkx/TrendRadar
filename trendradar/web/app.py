@@ -8,10 +8,11 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 import os
 
 from trendradar.models.base import engine, Base
-from trendradar.web.routers import auth
+from trendradar.web.routers import auth, admin
 from trendradar.web.auth.dependencies import get_current_user, get_optional_user
 from trendradar.models.user import User
 
@@ -33,8 +34,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Session 中间件 (用于 OAuth 流程)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv("JWT_SECRET", "your-secret-key-change-this"),
+    max_age=None,
+    session_cookie="session_id",
+)
+
 # 包含路由
 app.include_router(auth.router)
+app.include_router(admin.router)
 
 # 静态文件和模板
 templates = Jinja2Templates(directory="trendradar/web/templates")
@@ -45,6 +55,19 @@ app.mount("/static", StaticFiles(directory="trendradar/web/static"), name="stati
 @app.on_event("startup")
 async def startup_event():
     """应用启动时创建数据库表"""
+    import sys
+    try:
+        # Test bcrypt at startup
+        import bcrypt
+        print(f"DEBUG startup: bcrypt module = {bcrypt}", file=sys.stderr)
+        print(f"DEBUG startup: bcrypt.hashpw = {bcrypt.hashpw}", file=sys.stderr)
+        test_hash = bcrypt.hashpw(b'test', bcrypt.gensalt())
+        print(f"DEBUG startup: bcrypt test successful", file=sys.stderr)
+    except Exception as e:
+        print(f"DEBUG startup: bcrypt test failed: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+
     try:
         Base.metadata.create_all(bind=engine)
         print("数据库表创建完成")
@@ -77,6 +100,23 @@ async def index(request: Request, current_user: User = Depends(get_optional_user
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """全局异常处理器"""
+    import traceback
+    import sys
+    import os
+    import bcrypt as bc
+
+    # Print full traceback to stderr
+    print(f"\n{'='*60}", file=sys.stderr)
+    print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
+    print(f"Request URL: {request.url}", file=sys.stderr)
+    print(f"Request Method: {request.method}", file=sys.stderr)
+    print(f"bcrypt module: {bc}", file=sys.stderr)
+    print(f"bcrypt has hashpw: {hasattr(bc, 'hashpw')}", file=sys.stderr)
+    print(f"bcrypt file: {bc.__file__ if hasattr(bc, '__file__') else 'N/A'}", file=sys.stderr)
+    print(f"{'='*60}", file=sys.stderr)
+    traceback.print_exc(file=sys.stderr)
+    print(f"{'='*60}\n", file=sys.stderr)
+
     return JSONResponse(
         status_code=500,
         content={

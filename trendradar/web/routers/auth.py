@@ -4,9 +4,10 @@
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session
 from starlette.requests import Request
+from pydantic import BaseModel, EmailStr, Field
 import uuid
 
 from trendradar.models.base import get_db
@@ -159,17 +160,209 @@ async def callback(
     return response
 
 
-@router.post("/logout")
-async def logout(response: Response):
+# 请求模型
+class RegisterRequest(BaseModel):
+    """注册请求"""
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=100)
+    confirm_password: str = Field(..., min_length=8, max_length=100)
+    name: str = Field(..., min_length=2, max_length=100)
+
+
+class LoginRequest(BaseModel):
+    """登录请求"""
+    email: EmailStr
+    password: str = Field(..., min_length=1, max_length=100)
+
+
+@router.post("/register")
+async def register(
+    request_data: RegisterRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    邮箱注册
+    """
+    # 验证密码一致性
+    if request_data.password != request_data.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="两次输入的密码不一致"
+        )
+
+    # 检查邮箱是否已存在
+    existing_user = db.query(User).filter(User.email == request_data.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="该邮箱已被注册"
+        )
+
+    # 哈希密码（在函数内部导入 bcrypt）
+    import bcrypt
+    password_bytes = request_data.password.encode('utf-8')[:72]
+    password_hash = bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode('utf-8')
+
+    # 创建新用户
+    user = User(
+        email=request_data.email,
+        name=request_data.name,
+        provider="email",
+        provider_id=request_data.email,
+        password_hash=password_hash,
+        tier=UserTier.FREE.value,
+        email_verified=False
+    )
+    db.add(user)
+    db.flush()
+
+    # 创建默认用户配置
+    user_config = UserConfig(
+        user_id=user.id,
+        report_mode="daily",
+        timezone="Asia/Shanghai"
+    )
+    db.add(user_config)
+    db.commit()
+    db.refresh(user)
+
+    # 创建 JWT token
+    access_token = create_access_token({
+        "user_id": str(user.id),
+        "email": user.email,
+        "tier": user.tier
+    })
+
+    # 返回 JSON 响应并设置 HttpOnly Cookie
+    response = JSONResponse(
+        content={
+            "message": "注册成功",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "name": user.name,
+                "tier": user.tier
+            }
+        },
+        status_code=status.HTTP_201_CREATED
+    )
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=7 * 24 * 60 * 60,
+        secure=False,
+        samesite="lax"
+    )
+
+    return response
+
+
+@router.post("/login")
+async def login(
+    request_data: LoginRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    邮箱登录
+    """
+    # 查找用户
+    user = db.query(User).filter(
+        User.email == request_data.email,
+        User.provider == "email"
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="邮箱或密码错误"
+        )
+
+    # 验证密码（在函数内部导入 bcrypt）
+    if not user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="该账户不支持密码登录，请使用 OAuth 登录"
+        )
+
+    import bcrypt
+    password_bytes = request_data.password.encode('utf-8')[:72]
+    hashed_bytes = user.password_hash.encode('utf-8')
+
+    if not bcrypt.checkpw(password_bytes, hashed_bytes):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="邮箱或密码错误"
+        )
+
+    # 检查账户状态
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="该账户已被禁用"
+        )
+
+    # 创建 JWT token
+    access_token = create_access_token({
+        "user_id": str(user.id),
+        "email": user.email,
+        "tier": user.tier
+    })
+
+    # 返回 JSON 响应并设置 HttpOnly Cookie
+    response = JSONResponse(
+        content={
+            "message": "登录成功",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "name": user.name,
+                "tier": user.tier,
+                "is_superuser": user.is_superuser
+            }
+        }
+    )
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=7 * 24 * 60 * 60,
+        secure=False,
+        samesite="lax"
+    )
+
+    return response
+
+
+@router.api_route("/logout", methods=["GET", "POST"])
+async def logout(request: Request, response: Response):
     """
     退出登录
 
+    支持 GET 和 POST 方法
+
+    - GET: 重定向到登录页面
+    - POST: 返回 JSON 响应（用于 AJAX 调用）
+
     Returns:
-        清除 Cookie 并返回成功消息
+        GET: 重定向到登录页面
+        POST: JSON 响应
     """
-    response = Response(content='{"message": "退出登录成功"}', media_type="application/json")
-    response.delete_cookie("access_token")
-    return response
+    from fastapi.responses import RedirectResponse
+
+    # 清除 Cookie
+    if request.method == "POST":
+        # POST 请求：返回 JSON 响应
+        response_obj = Response(content='{"message": "退出登录成功"}', media_type="application/json")
+        response_obj.delete_cookie("access_token")
+        return response_obj
+    else:
+        # GET 请求：重定向到登录页面
+        redirect_resp = RedirectResponse(url="/", status_code=302)
+        redirect_resp.delete_cookie("access_token")
+        return redirect_resp
 
 
 @router.get("/me")

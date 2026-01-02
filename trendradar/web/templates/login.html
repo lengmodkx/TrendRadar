@@ -3,10 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - TrendRadar</title>
+    <title>登录/注册 - TrendRadar</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+<body class="bg-gray-50 min-h-screen flex items-center justify-center"
+      x-data="{
+        mode: 'login',
+        githubEnabled: false,
+        async init() {
+            // 获取 OAuth 配置状态
+            try {
+                const response = await fetch('/auth/oauth-config');
+                const data = await response.json();
+                this.githubEnabled = data.github_enabled;
+            } catch (error) {
+                console.error('Failed to fetch OAuth config:', error);
+            }
+        }
+      }">
     <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <!-- 标题 -->
         <div class="text-center mb-8">
@@ -14,37 +29,218 @@
             <p class="text-gray-600 mt-2">热点新闻聚合与分析工具</p>
         </div>
 
-        <!-- 登录按钮 -->
-        <div class="space-y-4">
-            <!-- GitHub 登录 -->
-            <a href="/auth/login/github"
-               class="flex items-center justify-center w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84-1.235 1.911-1.237 1.911-1.237 2.598 5.467 5.467 5.467 1.387 0 2.598-.469 3.22-1.24.715 1.676-1.237 2.665-.404 1.06-.305 2.467-1.237 3.003-.245.665.535-1.304.762-1.604-.898-.727-1.334-1.416-1.334-1.416V12c0-6.627-5.373-12-12-12z"/>
-                </svg>
-                使用 GitHub 登录
-            </a>
+        <!-- 登录表单 -->
+        <div x-show="mode === 'login'" x-transition>
+            <!-- GitHub 登录按钮（动态显示） -->
+            <div x-show="githubEnabled" class="mb-4">
+                <a href="/auth/login/github"
+                   class="flex items-center justify-center w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84-1.235 1.911-1.237 1.911-1.237 2.598 5.467 5.467 5.467 1.387 0 2.598-.469 3.22-1.24.715 1.676-1.237 2.665-.404 1.06-.305 2.467-1.237 3.003-.245.665.535-1.304.762-1.604-.898-.727-1.334-1.416-1.334-1.416V12c0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    使用 GitHub 登录/注册
+                </a>
+            </div>
 
-            <!-- Google 登录 -->
-            <a href="/auth/login/google"
-               class="flex items-center justify-center w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                使用 Google 登录
-            </a>
+            <!-- 分割线（仅在有 GitHub 登录时显示） -->
+            <div x-show="githubEnabled" class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">或使用邮箱登录</span>
+                </div>
+            </div>
+
+            <!-- 邮箱登录表单 -->
+            <form @submit.prevent="handleEmailLogin" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700">邮箱</label>
+                    <input id="login-email" type="email" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="your@email.com">
+                </div>
+
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700">密码</label>
+                    <input id="login-password" type="password" required minlength="8"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="至少 8 位密码">
+                </div>
+
+                <div id="login-error" class="hidden text-sm text-red-600"></div>
+
+                <button type="submit"
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                    登录
+                </button>
+            </form>
+
+            <!-- 切换到注册 -->
+            <p class="mt-4 text-center text-sm text-gray-600">
+                还没有账户？
+                <button @click="mode = 'register'" class="text-blue-600 hover:text-blue-700 font-medium">
+                    立即注册
+                </button>
+            </p>
+        </div>
+
+        <!-- 注册表单 -->
+        <div x-show="mode === 'register'" x-transition>
+            <!-- GitHub 注册按钮（动态显示） -->
+            <div x-show="githubEnabled" class="mb-4">
+                <a href="/auth/login/github"
+                   class="flex items-center justify-center w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84-1.235 1.911-1.237 1.911-1.237 2.598 5.467 5.467 5.467 1.387 0 2.598-.469 3.22-1.24.715 1.676-1.237 2.665-.404 1.06-.305 2.467-1.237 3.003-.245.665.535-1.304.762-1.604-.898-.727-1.334-1.416-1.334-1.416V12c0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    使用 GitHub 注册
+                </a>
+            </div>
+
+            <!-- 分割线（仅在有 GitHub 登录时显示） -->
+            <div x-show="githubEnabled" class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">或使用邮箱注册</span>
+                </div>
+            </div>
+
+            <!-- 邮箱注册表单 -->
+            <form @submit.prevent="handleEmailRegister" class="space-y-4">
+                <div>
+                    <label for="register-name" class="block text-sm font-medium text-gray-700">姓名</label>
+                    <input id="register-name" type="text" required minlength="2" maxlength="100"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="您的姓名">
+                </div>
+
+                <div>
+                    <label for="register-email" class="block text-sm font-medium text-gray-700">邮箱</label>
+                    <input id="register-email" type="email" required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="your@email.com">
+                </div>
+
+                <div>
+                    <label for="register-password" class="block text-sm font-medium text-gray-700">密码</label>
+                    <input id="register-password" type="password" required minlength="8" maxlength="100"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="至少 8 位密码">
+                </div>
+
+                <div>
+                    <label for="register-confirm-password" class="block text-sm font-medium text-gray-700">确认密码</label>
+                    <input id="register-confirm-password" type="password" required minlength="8" maxlength="100"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="再次输入密码">
+                </div>
+
+                <div id="register-error" class="hidden text-sm text-red-600"></div>
+
+                <button type="submit"
+                        class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                    注册
+                </button>
+            </form>
+
+            <!-- 切换到登录 -->
+            <p class="mt-4 text-center text-sm text-gray-600">
+                已有账户？
+                <button @click="mode = 'login'" class="text-blue-600 hover:text-blue-700 font-medium">
+                    立即登录
+                </button>
+            </p>
         </div>
 
         <!-- 提示信息 -->
-        <p class="mt-6 text-center text-sm text-gray-500">
-            登录即表示您同意我们的
+        <p class="mt-6 text-center text-xs text-gray-500">
+            登录/注册即表示您同意我们的
             <a href="#" class="text-blue-600 hover:text-blue-700">服务条款</a>
             和
             <a href="#" class="text-blue-600 hover:text-blue-700">隐私政策</a>
         </p>
     </div>
+
+    <script>
+        // 邮箱登录
+        window.handleEmailLogin = async function() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    errorDiv.textContent = data.detail || data.error || '登录失败';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorDiv.textContent = '网络错误，请稍后重试';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        // 邮箱注册
+        window.handleEmailRegister = async function() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            const errorDiv = document.getElementById('register-error');
+
+            // 清除之前的错误信息
+            errorDiv.classList.add('hidden');
+
+            // 前端验证密码一致性
+            if (password !== confirmPassword) {
+                errorDiv.textContent = '两次输入的密码不一致';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        password,
+                        confirm_password: confirmPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 注册成功，重定向到首页
+                    window.location.href = '/';
+                } else {
+                    errorDiv.textContent = data.detail || data.error || '注册失败，请稍后重试';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('注册错误:', error);
+                errorDiv.textContent = '网络错误，请稍后重试';
+                errorDiv.classList.remove('hidden');
+            }
+        }
+    </script>
 </body>
 </html>

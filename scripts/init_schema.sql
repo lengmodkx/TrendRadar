@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url VARCHAR(500),
     provider VARCHAR(20) NOT NULL,
     provider_id VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),
+    is_superuser BOOLEAN NOT NULL DEFAULT false,
+    email_verified BOOLEAN NOT NULL DEFAULT false,
     tier VARCHAR(20) NOT NULL DEFAULT 'free',
     daily_push_limit INTEGER NOT NULL DEFAULT 10,
     keyword_limit INTEGER NOT NULL DEFAULT 50,
@@ -157,18 +160,30 @@ CREATE TRIGGER update_notification_channels_updated_at BEFORE UPDATE ON notifica
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- 插入测试数据（可选）
+-- 插入超级管理员账号
 -- ============================================
--- 插入一个测试用户（密码测试使用）
-INSERT INTO users (email, name, provider, provider_id, tier)
-VALUES ('test@example.com', '测试用户', 'github', '12345', 'free')
+-- 密码: lemon2judy (bcrypt 哈希)
+INSERT INTO users (email, name, provider, provider_id, password_hash, is_superuser, email_verified, tier, daily_push_limit, keyword_limit, is_active)
+VALUES (
+    'lengmodkx@gmail.com',
+    'Super Admin',
+    'email',
+    'lengmodkx@gmail.com',
+    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzpWMe78Uq',  -- password: lemon2judy
+    true,
+    true,
+    'premium',
+    9999,
+    9999,
+    true
+)
 ON CONFLICT (email) DO NOTHING;
 
--- 为测试用户创建默认配置
+-- 为超级管理员创建默认配置
 INSERT INTO user_configs (user_id, report_mode, timezone)
 SELECT id, 'daily', 'Asia/Shanghai'
 FROM users
-WHERE email = 'test@example.com'
+WHERE email = 'lengmodkx@gmail.com'
 ON CONFLICT (user_id) DO NOTHING;
 
 -- ============================================
