@@ -28,8 +28,17 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     name = Column(String(100), nullable=False)
     avatar_url = Column(String(500))
-    provider = Column(String(20), nullable=False)  # 'github' or 'google'
+    provider = Column(String(20), nullable=False)  # 'github' or 'google' or 'email'
     provider_id = Column(String(255), nullable=False)
+
+    # 密码哈希（邮箱登录用户使用）
+    password_hash = Column(String(255), nullable=True)
+
+    # 超级管理员标识
+    is_superuser = Column(Boolean, default=False, nullable=False)
+
+    # 邮箱验证状态
+    email_verified = Column(Boolean, default=False, nullable=False)
 
     # 用户等级和配额
     tier = Column(String(20), default=UserTier.FREE.value, nullable=False)

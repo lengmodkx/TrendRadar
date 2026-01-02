@@ -32,7 +32,8 @@ oauth.register(
     name='github',
     client_id=GITHUB_CLIENT_ID,
     client_secret=GITHUB_CLIENT_SECRET,
-    server_metadata_url='https://api.github.com/.well-known/oauth-authorization-server',
+    access_token_url='https://github.com/login/oauth/access_token',
+    authorize_url='https://github.com/login/oauth/authorize',
     client_kwargs={
         'scope': 'user:email'
     }
