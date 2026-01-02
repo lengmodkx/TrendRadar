@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: trendradar-postgres
+    environment:
+      POSTGRES_DB: trendradar
+      POSTGRES_USER: trendradar
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trendradar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build: .
+    container_name: trendradar-web
+    environment:
+      DATABASE_URL: postgresql://trendradar:${DB_PASSWORD}@postgres:5432/trendradar
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      MULTIUSER_MODE: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  crawler:
+    build: .
+    container_name: trendradar-crawler
+    command: python -m trendradar.__main__
+    environment:
+      DATABASE_URL: postgresql://trendradar:${DB_PASSWORD}@postgres:5432/trendradar
+      MULTIUSER_MODE: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
