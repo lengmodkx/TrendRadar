@@ -9,7 +9,7 @@ echo ============================================
 echo.
 echo 正在连接到数据库: 103.36.221.226
 echo 用户: postgres
-echo 数据库: trendradar
+echo 数据库: TrendRadar
 echo.
 
 REM 检查是否安装了 psql
@@ -25,8 +25,8 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-echo [提示] 如果数据库 'trendradar' 不存在，请先创建：
-echo   CREATE DATABASE trendradar;
+echo [提示] 如果数据库 'TrendRadar' 不存在，请先创建：
+echo   CREATE DATABASE TrendRadar;
 echo.
 echo 按任意键继续初始化数据库...
 pause >nul
@@ -65,7 +65,7 @@ if %ERRORLEVEL% EQU 0 (
     echo 可能的原因:
     echo   1. 数据库服务器不可达
     echo   2. 用户名或密码错误
-    echo   3. 数据库 'trendradar' 不存在
+    echo   3. 数据库 'TrendRadar' 不存在
     echo.
     echo 请检查:
     echo   - 数据库地址: 103.36.221.226

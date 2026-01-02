@@ -1,13 +1,13 @@
 -- TrendRadar 多用户系统数据库初始化脚本
--- 使用方法: psql -h 103.36.221.226 -U postgres -d trendradar -f scripts/init_schema.sql
--- 或者先连接数据库: psql -h 103.36.221.226 -U postgres -d trendradar
+-- 使用方法: psql -h 103.36.221.226 -U postgres -d TrendRadar -f scripts/init_schema.sql
+-- 或者先连接数据库: psql -h 103.36.221.226 -U postgres -d TrendRadar
 -- 然后执行: \i scripts/init_schema.sql
 
 -- 创建数据库（如果不存在）
--- CREATE DATABASE trendradar;
+-- CREATE DATABASE TrendRadar;
 
--- 切换到 trendradar 数据库
-\c trendradar
+-- 切换到 TrendRadar 数据库
+\c TrendRadar
 
 -- 启用 UUID 扩展
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
