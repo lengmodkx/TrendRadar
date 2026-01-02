@@ -50,3 +50,6 @@ output/
 
 # Alembic
 alembic/versions/*.pyc
+
+# Claude Code local settings
+.claude/settings.local.json
